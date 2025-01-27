@@ -39,7 +39,7 @@ const UserSchema: Schema = new Schema({
   },
   profileImage: {
     type: String,
-    require: true
+    // require: true
   },
   friends: [
     {
@@ -71,4 +71,4 @@ const UserSchema: Schema = new Schema({
   }
 );
 
-export const UserModel = mongoose.model<IUser>("Organization", UserSchema);
+export const UserModel = mongoose.model<IUser>("User", UserSchema);

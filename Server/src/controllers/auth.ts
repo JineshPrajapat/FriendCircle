@@ -20,14 +20,16 @@ export const registerUser = async (
   const { userName, fullName, password } = req.body;
 
   try {
+    
     const user = await model.exists(UserModel, { userName });
     if (user) {
-      throw new AppError("User already exists", StatusCodes.CONFLICT)
+      return next(new AppError("User already exists", StatusCodes.CONFLICT));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const createdUser = await model.create(UserModel, { password: hashedPassword, userName, fullName });
+    const profileImage = `https://api.dicebear.com/5.x/initials/svg?seed=${userName}`;
+    
+    const createdUser = await model.create(UserModel, { password: hashedPassword, userName, fullName, profileImage });
     if (!createdUser)
       throw new AppError("DB Error", StatusCodes.BAD_GATEWAY)
 
@@ -62,7 +64,7 @@ export const login = async (
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+): Promise<Response> => {
   const { userName, password } = req.body;
 
   try {
@@ -84,18 +86,25 @@ export const login = async (
       maxAge: 1 * 24 * 60 * 60 * 1000, // 1 days
     });
 
-    res
-      .status(StatusCodes.OK)
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      })
-      .json({ accessToken });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    })
+
+
+    return res.status(StatusCodes.OK).json({
+      message: "Login succesfully", 
+      accessToken, 
+      user:{
+        userName :user.userName,
+        fullName: user.fullName
+      }
+    });
   } catch (err: any) {
     console.log(err.message)
-    throw new AppError("Error while login",  StatusCodes.INTERNAL_SERVER_ERROR)
+    throw new AppError("Error while login", StatusCodes.INTERNAL_SERVER_ERROR)
   }
 };
 
@@ -106,13 +115,13 @@ export const refreshToken = async (
 ): Promise<void> => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-    throw new AppError("Refresh token is required",  StatusCodes.FORBIDDEN)
+    throw new AppError("Refresh token is required", StatusCodes.FORBIDDEN)
   }
 
   try {
     const user = await model.findOne(UserModel, { refreshToken });
     if (!user) {
-      throw new AppError("Invalid refresh token",  StatusCodes.FORBIDDEN)
+      throw new AppError("Invalid refresh token", StatusCodes.FORBIDDEN)
     }
 
     const payload = verifyRefreshToken(refreshToken);
@@ -123,7 +132,7 @@ export const refreshToken = async (
 
     res.status(StatusCodes.OK).json({ accessToken: newAccessToken });
   } catch (err: any) {
-    throw new AppError("Invalid refresh token",  StatusCodes.FORBIDDEN)
+    throw new AppError("Invalid refresh token", StatusCodes.FORBIDDEN)
   }
 };
 
@@ -134,13 +143,13 @@ export const logout = async (
 ): Promise<void> => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-    throw new AppError("Refresh token is required",  StatusCodes.FORBIDDEN)
+    throw new AppError("Refresh token is required", StatusCodes.FORBIDDEN)
   }
 
   try {
     const user = await model.findOneAndUpdate(UserModel, { refreshToken }, { refreshToken: "" });
     if (!user) {
-      throw new AppError("Invalid refresh token",  StatusCodes.FORBIDDEN)
+      throw new AppError("Invalid refresh token", StatusCodes.FORBIDDEN)
     }
 
     res
@@ -152,7 +161,7 @@ export const logout = async (
       })
       .json({ message: "Logged out successfully" });
   } catch (err: any) {
-    throw new AppError("Error logging out",  StatusCodes.INTERNAL_SERVER_ERROR)
+    throw new AppError("Error logging out", StatusCodes.INTERNAL_SERVER_ERROR)
   }
 };
 

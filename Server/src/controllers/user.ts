@@ -18,19 +18,22 @@ export const allUsers = async (
                 userName: 1,
                 fullName: 1,
                 profileImage: 1,
-                interest: 1
+                interest: 1,
+                friends: 1,
+                freindRequestSent: 1,
+                friendRequestRecieved: 1
             }
         }
     ]);
 
-    console.log(userList);
+    // console.log(userList);
 
     if (!userList.length)
         throw new AppError("UserList not found", StatusCodes.NO_CONTENT);
 
     return res.status(StatusCodes.OK).json({
         success: true,
-        userList: userList
+        allUsers: userList
     });
 }
 
@@ -40,6 +43,8 @@ export const userDetail = async (
     next: NextFunction
 ) => {
     const userId = req.user?.id;
+
+    // console.log("userId", userId)
 
     const user = await UserModel.aggregate([
         {
@@ -52,11 +57,15 @@ export const userDetail = async (
                 fullName: 1,
                 profileImage: 1,
                 interest: 1,
+                friends: 1,
+                freindRequestSent: 1,
+                friendRequestRecieved: 1
             }
         }
     ]);
+    // console.log("user[0]", user[0])
 
-    if (!user[0].length)
+    if (!user.length)
         throw new AppError("User not found", 401);
 
     return res.status(200).json({
@@ -65,6 +74,42 @@ export const userDetail = async (
     })
 }
 
+
+export const getUserData = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { userId } = req.query;
+
+
+    const user = await UserModel.aggregate([
+        {
+            $match: { _id: new mongoose.Types.ObjectId(userId as string) }
+        },
+        {
+            $project: {
+                _id: 1,
+                userName: 1,
+                fullName: 1,
+                profileImage: 1,
+                interest: 1,
+                friends: 1,
+                freindRequestSent: 1,
+                friendRequestRecieved: 1
+            }
+        }
+    ]);
+    console.log("user[0]", user[0])
+
+    if (!user.length)
+        throw new AppError("User not found", 404);
+
+    return res.status(200).json({
+        success: true,
+        userData: user[0]
+    })
+}
 export const searchUser = async (
     req: Request,
     res: Response,
@@ -126,7 +171,7 @@ export const friends = async (
         },
         {
             $project: {
-                friendId: '$friendDetails._id',
+                _id: '$friendDetails._id',
                 userName: '$friendDetails.userName',
                 fullName: '$friendDetails.fullName',
                 profileImage: '$friendDetails.profileImage',
@@ -135,12 +180,12 @@ export const friends = async (
         }
     ]);
 
-    if (!friendList[0].length)
+    if (!friendList.length)
         throw new AppError("Freinds not available", StatusCodes.NO_CONTENT);
 
     return res.status(StatusCodes.OK).json({
         success: true,
-        friendsList: friendList[0]
+        friends: friendList
     })
 }
 
@@ -168,7 +213,7 @@ export const getRequestRecieved = async (
         },
         {
             $project: {
-                friendId: '$friendDetails._id',
+                _id: '$friendDetails._id',
                 userName: '$friendDetails.userName',
                 fullName: '$friendDetails.fullName',
                 profileImage: '$friendDetails.profileImage',
@@ -177,12 +222,12 @@ export const getRequestRecieved = async (
         }
     ]);
 
-    if (!requestRecievedList[0].length)
+    if (!requestRecievedList.length)
         throw new AppError("Freinds not available", StatusCodes.NO_CONTENT);
 
     return res.status(StatusCodes.OK).json({
         success: true,
-        requestRecievedList: requestRecievedList[0]
+        requestReceived: requestRecievedList
     })
 }
 
@@ -192,6 +237,7 @@ export const getRequestSended = async (
     next: NextFunction
 ) => {
     const userId = req.user?.id;
+    console.log("userId", userId);
 
     const requestSentList = await UserModel.aggregate([
         {
@@ -206,11 +252,14 @@ export const getRequestSended = async (
             }
         },
         {
-            $unwind: '$friendDetails',
+            $unwind: {
+                path: '$friendDetails', // Unwinds the friendDetails array
+                preserveNullAndEmptyArrays: true // if no match is found, the field will still exist but be null
+            }
         },
         {
             $project: {
-                friendId: '$friendDetails._id',
+                _id: '$friendDetails._id',
                 userName: '$friendDetails.userName',
                 fullName: '$friendDetails.fullName',
                 profileImage: '$friendDetails.profileImage',
@@ -219,12 +268,14 @@ export const getRequestSended = async (
         }
     ]);
 
-    if (!requestSentList[0].length)
+    console.log("requestSentList", requestSentList)
+
+    if (!requestSentList.length)
         throw new AppError("Freinds not available", StatusCodes.NO_CONTENT);
 
     return res.status(StatusCodes.OK).json({
         success: true,
-        requestSentList: requestSentList[0]
+        requestSent: requestSentList
     })
 }
 
@@ -235,6 +286,7 @@ export const sendFriendRequest = async (
 ) => {
     const userId = req.user?.id;
     const { recieverId } = req.query;
+    console.log("req.query", req.query);
 
     if (!recieverId)
         throw new AppError("Feild not Found", StatusCodes.BAD_REQUEST);
@@ -310,8 +362,8 @@ export const rejectFriendRequest = async (
     const userId = req.user?.id
 
     const updateSender = UserModel.updateOne(
-        { _id: senderID, friendRequestSent: userId },
-        { $pull: { friendRequestSent: userId } }
+        { _id: senderID, freindRequestSent: userId },
+        { $pull: { freindRequestSent: userId } }
     );
 
     const updateUser = UserModel.updateOne(
@@ -335,6 +387,8 @@ export const unfollow = async (
     const { opponentID } = req.query;
     const userId = req.user?.id;
 
+    console.log("opponentId", opponentID);
+
     const updateUser = UserModel.updateOne(
         { _id: userId, friends: opponentID },
         { $pull: { friends: opponentID } }
@@ -345,7 +399,9 @@ export const unfollow = async (
         { $pull: { friends: userId } }
     );
 
-    await Promise.all([updateUser, updateOpponentUser]);
+    const [user, opponent] = await Promise.all([updateUser, updateOpponentUser]);
+    console.log("user", user);
+    console.log("opponent", opponent);
 
     return res.status(StatusCodes.OK).json({
         success: true,
@@ -361,17 +417,26 @@ export const withdrawRequest = async (
     const { recieverID } = req.query;
     const userId = req.user?.id;
 
+    console.log("reciverID type", typeof userId);
+
+
     const updateUser = UserModel.updateOne(
-        { _id: userId, friendRequestSent: recieverID },
-        { $pull: { friendRequestSent: recieverID } }
+        { _id: userId, freindRequestSent: recieverID },
+        { $pull: { freindRequestSent: recieverID } }
     );
+    const user = await UserModel.findById(userId);
+    console.log("user", user);
+    const reciever = await UserModel.findById(recieverID);
+    console.log("user", reciever);
 
     const updateReceiver = UserModel.updateOne(
         { _id: recieverID, friendRequestRecieved: userId },
         { $pull: { friendRequestRecieved: userId } }
     );
 
-    await Promise.all([updateUser, updateReceiver]);
+    const [User, recievered] = await Promise.all([updateUser, updateReceiver]);
+    console.log("User", User);
+    console.log("reciever", recievered);
 
     return res.status(StatusCodes.OK).json({
         success: true,
@@ -413,63 +478,83 @@ export const getRecommendation = async (
 ) => {
     const userId = req.user?.id;
 
-    const userInterest = await UserModel.findById(userId);
-    console.log("recommendation", userInterest);
+    const user = await UserModel.findById(userId).select("interest");
+    console.log("recommendation", user);
 
-    if (!userInterest?.interest) {
+    if (!user?.interest) {
         return res.status(404).json({
             success: false,
             message: 'No interests found'
         });
     }
 
-    const recommendations = await UserModel.aggregate([
-        {
-            $match: {
-                _id: new mongoose.Types.ObjectId(userId)
-            }
-        },
-        {
-            $lookup: {
-                from: 'users', 
-                let: { userInterests: "$interest" },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: { $in: ["$interest", "$$userInterests"] }
-                        }
-                    },
-                    {
-                        $match: {
-                            _id: { $nin: userInterest?.friends },
-                            // _id: { $ne: userInterest?._id }
-                        }
-                    },
-                    {
-                        $project: {
-                            _id: 1,
-                            username: 1,
-                            fullName: 1,
-                            profileImage: 1,
-                            interest: 1
-                        }
-                    }
-                ],
-                as: 'recommendations' 
-            }
-        },
-        {
-            $project: {
-                recommendations: 1
-            }
-        }
-    ]);
+    const userInterests = user.interest;
+    const usersWithCommonInterests = await UserModel.find({
+        _id: { $ne: userId },
+        interest: { $in: userInterests },
+      }).select("userName fullName profileImage interest friends _id");
 
-    const recommendedUsers = recommendations.length > 0 ? recommendations[0].recommendations : [];
+    // const recommendations = await UserModel.aggregate([
+    //     {
+    //         // Step 2: Match the user by their ID and get their interests
+    //         $match: {
+    //             _id: new mongoose.Types.ObjectId(userId),
+    //         },
+    //     },
+    //     {
+    //         // Step 3: Project only the interests array from the user
+    //         $project: {
+    //             interests: "$interest", // Alias the interest field
+    //         },
+    //     },
+    //     {
+    //         // Step 4: Lookup users with common interests
+    //         $lookup: {
+    //             from: "users", // The collection we are joining with (users)
+    //             let: { userInterests: "$interests" }, // Pass the user's interests to the lookup stage
+    //             pipeline: [
+    //                 {
+    //                     // Match users who have at least one common interest
+    //                     $match: {
+    //                         $expr: {
+    //                             $in: ["$interest", "$$userInterests"], // Check if user's interest exists in the other users' interest array
+    //                         },
+    //                         _id: { $ne: userId }, // Exclude the given user from results
+    //                     },
+    //                 },
+    //                 {
+    //                     // Step 5: Project the relevant user fields
+    //                     $project: {
+    //                         userName: 1,
+    //                         fullName: 1,
+    //                         profileImage: 1,
+    //                         interest: 1,
+    //                     },
+    //                 },
+    //             ],
+    //             as: "commonInterests", // Store the matched users in the "commonInterests" array
+    //         },
+    //     },
+    //     {
+    //         // Step 6: Unwind the "commonInterests" array so we get a flat list of users
+    //         $unwind: {
+    //             path: "$commonInterests",
+    //             preserveNullAndEmptyArrays: true, // Keep users without common interests
+    //         },
+    //     },
+    //     // {
+    //     //     // Step 7: Project the final result with the matched user data
+    //     //     $replaceRoot: {
+    //     //         newRoot: "$commonInterests", // Replace the root with the "commonInterests" object
+    //     //     },
+    //     // },
+    // ]);
+    console.log("recommedation", usersWithCommonInterests);
+    const recommendations = usersWithCommonInterests.length > 0 ? usersWithCommonInterests : [];
 
     return res.status(200).json({
         success: true,
-        recommendedUsers: recommendedUsers
+        recommendations
     });
 
 }
@@ -480,13 +565,13 @@ export const updateInterest = async (
     next: NextFunction
 ) => {
     const userId = req.user?.id;
-    const { interests } = req.body;  
+    const { interests } = req.body;
 
     const userUpdateResult = await UserModel.updateOne(
         { _id: userId },
         {
             $addToSet: {
-                interest: { $each: interests } 
+                interest: { $each: interests }
             }
         }
     );

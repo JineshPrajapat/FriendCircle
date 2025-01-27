@@ -21,7 +21,7 @@ export const authHandler = async (req: Request, res: Response, next: NextFunctio
             throw new AppError("Token must be provided", 401);
         }
 
-        console.log("access_toekn", access_Token);
+        // console.log("access_toekn", access_Token);
 
         let decoded: TokenPayload | null = verifyAccessToken(access_Token);
         // try {
@@ -53,6 +53,8 @@ export const authHandler = async (req: Request, res: Response, next: NextFunctio
                 new AppError("The user belonging to this token no longer exists.", 401)
             );
         }
+
+        // console.log("decoded", decoded);
 
         req.user = decoded;
         next();
