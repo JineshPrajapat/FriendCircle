@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",                // Compile to modern JavaScript
+    "module": "CommonJS",             // Use CommonJS module system for Node.js
+    "outDir": "./dist",               // Output directory for compiled JavaScript
+    "rootDir": "./src",               // Source directory for TypeScript files
+    "strict": true,                   // Enable strict type-checking
+    "esModuleInterop": true,          // Support imports from CommonJS modules
+    "skipLibCheck": true,             // Skip type-checking of declaration files
+    "forceConsistentCasingInFileNames": true // Enforce consistent casing in imports
+  },
+  "include": ["src/**/*"],            // Include all TypeScript files in src
+  "exclude": ["node_modules", "dist"] // Exclude unnecessary directories
+}
