@@ -9,6 +9,7 @@ import v1Routes from "./routes/v1/index";
 import errorHandlerMiddleware from "./middlewares/errorHandler";
 import notFoundMiddleware from "./middlewares/notFound";
 import cookieParser from "cookie-parser";
+import logger from "./utils/logger";
 
 dotenv.config();
 
@@ -36,6 +37,13 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    logger.logRequest(req, res);
+  });
+
+  next();
+});
 
 app.use("/api/v1", v1Routes);
 

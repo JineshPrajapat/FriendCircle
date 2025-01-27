@@ -17,7 +17,7 @@ export const registerUser = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { password, userName, fullName } = req.body;
+  const { userName, fullName, password } = req.body;
 
   try {
     const user = await model.exists(UserModel, { userName });
@@ -76,6 +76,13 @@ export const login = async (
     const accessToken = generateAccessToken({ id: String(user._id), userName: user.userName });
     const refreshToken = generateRefreshToken({ id: String(user._id), userName: user.userName });
     await model.findOneAndUpdate(UserModel, { _id: user._id }, { refreshToken: refreshToken });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 days
+    });
 
     res
       .status(StatusCodes.OK)

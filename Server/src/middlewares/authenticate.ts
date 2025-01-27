@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken } from '../utils/jwtUtils';
+import { TokenPayload, verifyAccessToken } from '../utils/jwtUtils';
+import AppError from '../utils/appError';
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { UserModel } from '../models/Users';
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -16,3 +19,5 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     res.status(401).json({ message: 'Unauthorized: Invalid token' });
   }
 };
+
+

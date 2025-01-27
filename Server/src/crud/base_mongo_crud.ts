@@ -28,12 +28,39 @@ export async function findOne<T extends Document>(model: Model<T>, query: Filter
     }
 }
 
+export async function findById<T extends Document>(model: Model<T>, id: string): Promise<T | null> {
+    try {
+        return await model.findById(id).exec();
+    } catch (error) {
+        handleDatabaseError('findById', error);
+        return null;
+    }
+}
+
 export async function findOneAndUpdate<T extends Document>(model: Model<T>, query: FilterQuery<T>, updateData: Partial<T>): Promise<T | null> {
     try {
         const updatedDocument = await model.findOneAndUpdate(query, updateData, { new: true, upsert: true  });
         return updatedDocument;
     } catch (error) {
         handleDatabaseError('findOne', error);
+        return null;
+    }
+}
+
+export async function updateOne<T extends Document>(model: Model<T>, query: FilterQuery<T>, updateData: Partial<T>): Promise<T | null> {
+    try {
+        const updatedDocument = await model.updateOne(query, updateData);
+        
+        // To check if the update was successful, you can inspect the result
+        if (updatedDocument) {
+            // Return the updated document using findById, since updateOne does not return the updated document
+            const updated = await model.findById(query._id);
+            return updated;
+        } else {
+            return null; // No document was modified
+        }
+    } catch (error) {
+        handleDatabaseError('updateOne', error);
         return null;
     }
 }
