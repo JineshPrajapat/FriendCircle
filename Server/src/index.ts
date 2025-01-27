@@ -24,7 +24,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(helmet())
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: process.env.FRONTEND_URL || "https://friend-circle-olive.vercel.app" || "http://localhost:5173",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
