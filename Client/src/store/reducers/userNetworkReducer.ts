@@ -1,4 +1,4 @@
-import { getAllFriend, getAllRequestRecieved, getAllRequestSent, getAllUser, getRecommendation, getUserData } from '@/services/networkManagement';
+import { getAllFriend, getAllRequestRecieved, getAllRequestSent, getAllUser, getMutualFriends, getRecommendation, getUserData, searchUser } from '@/services/networkManagement';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface User {
@@ -78,6 +78,20 @@ const userNetworkSlice = createSlice({
         state.loading = false;
       })
 
+      // searchUser
+      .addCase(searchUser.pending, (state) => {
+        state.error = null;
+        state.loading = true;
+      })
+      .addCase(searchUser.fulfilled, (state, action: PayloadAction<any>) => {
+        console.log("hello", action)
+        state.allUsers = action.payload
+        state.loading = false;
+      })
+      .addCase(searchUser.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.loading = false;
+      })
 
       // get all request sent
       .addCase(getAllRequestSent.pending, (state) => {
@@ -145,6 +159,20 @@ const userNetworkSlice = createSlice({
         state.loading = false;
       })
       .addCase(getRecommendation.rejected, (state, action) => {
+        state.error = action.payload as string;
+        state.loading = false;
+      })
+
+      // get mutual Friends
+      .addCase(getMutualFriends.pending, (state) => {
+        state.error = null;
+        state.loading = true;
+      })
+      .addCase(getMutualFriends.fulfilled, (state, action: PayloadAction<any>) => {
+        state.mutualFriends = action.payload
+        state.loading = false;
+      })
+      .addCase(getMutualFriends.rejected, (state, action) => {
         state.error = action.payload as string;
         state.loading = false;
       });

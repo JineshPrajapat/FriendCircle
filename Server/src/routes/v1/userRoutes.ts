@@ -1,7 +1,7 @@
 import express from "express"
 import { authHandler } from "../../middlewares/authHandler";
 import asyncHandler from "../../utils/asyncHandler";
-import { acceptFriendRequest, allUsers, friends, getAllInterest, getRecommendation, getRequestRecieved, getRequestSended, rejectFriendRequest, searchUser, sendFriendRequest, unfollow, updateInterest, userDetail, withdrawRequest, getUserData } from "../../controllers/user";
+import { acceptFriendRequest, allUsers, friends, getAllInterest, getRecommendation, getRequestRecieved, getRequestSended, rejectFriendRequest, searchUser, sendFriendRequest, unfollow, updateInterest, userDetail, withdrawRequest, getUserData, getMutualFriends } from "../../controllers/user";
 
 const router = express.Router()
 
@@ -15,6 +15,7 @@ router.route("/userDetail").get(authHandler, asyncHandler(userDetail));
 router.route("/getUserData").get(authHandler, asyncHandler(getUserData));
 router.route("/getAllInterest").get(authHandler, asyncHandler(getAllInterest));
 router.route("/getRecommendation").get(authHandler, asyncHandler(getRecommendation));
+router.route("/getMutualFriends").get(authHandler, asyncHandler(getMutualFriends));
 
 // router.get("/mutualFriends", auth, mutualFriends);
 

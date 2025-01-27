@@ -74,7 +74,6 @@ export const userDetail = async (
     })
 }
 
-
 export const getUserData = async (
     req: Request,
     res: Response,
@@ -110,6 +109,7 @@ export const getUserData = async (
         userData: user[0]
     })
 }
+
 export const searchUser = async (
     req: Request,
     res: Response,
@@ -142,7 +142,7 @@ export const searchUser = async (
 
     return res.status(200).json({
         success: true,
-        users
+        allUsers : users
     });
 
 }
@@ -587,5 +587,56 @@ export const updateInterest = async (
         success: true,
         message: 'User interests updated successfully'
     });
+
+}
+
+export const getMutualFriends = async(
+    req:Request,
+    res:Response,
+    next: NextFunction
+)=>{
+    const userId = req.user?.id;
+    const { opponentID} = req.query;
+
+    const mutualFriends = await UserModel.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(userId),
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',  
+            localField: 'friends',  
+            foreignField: '_id', 
+            as: 'friendsOfUser1',
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'friendsOfUser1',
+            foreignField: '_id',
+            as: 'mutualFriends',  
+          },
+        },
+        {
+          $match: {
+            'mutualFriends.friends': new mongoose.Types.ObjectId(opponentID as string),
+          },
+        },
+        {
+          $project: {
+            mutualFriends: 1,  
+            _id: 0, 
+          },
+        },
+      ]);
+
+      console.log("mutualFriends", mutualFriends);
+      return res.status(200).json({
+        success:true,
+        mutualFriends : mutualFriends[0]
+      })
 
 }

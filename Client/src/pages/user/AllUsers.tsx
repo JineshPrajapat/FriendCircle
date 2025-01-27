@@ -20,8 +20,9 @@ const AllUsers: React.FC = () => {
     const intervalId = setInterval(() => {
       dispatch(getAllUser());
     }, 2000);
-
     return () => clearInterval(intervalId);
+
+    // dispatch(getAllUser());
   }, [dispatch]);
 
 //  handle functions
@@ -42,7 +43,8 @@ const AllUsers: React.FC = () => {
   };
 
   const isHomePage = location.pathname === "/";
-  const displayedUsers = isHomePage ? allUser.slice(0, 10) : allUser;
+  // const displayedUsers = isHomePage ? allUser.slice(0, 10) : allUser;
+  const displayedUsers = Array.isArray(allUser) ? (isHomePage ? allUser.slice(0, 10) : allUser) : [];
 
   return (
     <section className="mt-6 bg-white p-4 rounded-lg shadow-md">

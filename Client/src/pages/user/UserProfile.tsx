@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { NavLink, useParams } from 'react-router-dom';
 import InterestForm from '@/Component/InterestForm';
 import { AppDispatch, RootState } from '@/store/store';
-import { acceptFriendRequest, getUserData, sendFriendRequest, unfollowFriend, withdrawRequest } from '@/services/networkManagement';
+import { acceptFriendRequest, getMutualFriends, getUserData, sendFriendRequest, unfollowFriend, withdrawRequest } from '@/services/networkManagement';
 
 
 const UserProfile: React.FC = () => {
@@ -19,7 +19,7 @@ const UserProfile: React.FC = () => {
         if (userId) {
             dispatch(getUserData({ userId }));
         }
-        // dispatch(getMutualFriends(userID));
+        dispatch(getMutualFriends({opponentID: userId as string}));
     }, [dispatch, userId]);
 
     const handleAddFriend = (recieverId: string) => {

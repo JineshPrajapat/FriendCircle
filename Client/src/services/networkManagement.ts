@@ -23,6 +23,29 @@ export const getAllUser = createAsyncThunk(
     }
 );
 
+export const searchUser = createAsyncThunk(
+    "user/searchUser",
+    async ({ query }: { query: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await userApi.get("/user/search", {
+                params: { query }
+            });
+            // console.log("res:", response);
+            if (response.status === 200) {
+                console.log("response.data.user", response.data.allUsers)
+                return response?.data?.allUsers;
+            }
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data?.message ||
+                "Password updation failed: Server error."
+            );
+        }
+    }
+);
+
 export const getAllFriend = createAsyncThunk(
     "user/getAllFriend",
     async (_,
@@ -255,7 +278,7 @@ export const updateInterest = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const response = await userApi.put("/user/updateInterest", {interests: selectedInterests });
+            const response = await userApi.put("/user/updateInterest", { interests: selectedInterests });
             console.log("res:", response);
             if (response.status === 200) {
                 toast.success("Interests updated successfully")
@@ -283,6 +306,29 @@ export const getUserData = createAsyncThunk(
             if (response.status === 200) {
                 // console.log("response.data.user", response.data.user)
                 return response?.data?.userData;
+            }
+        } catch (error: any) {
+            return rejectWithValue(
+                error.response?.data?.message ||
+                "Password updation failed: Server error."
+            );
+        }
+    }
+);
+
+export const getMutualFriends = createAsyncThunk(
+    "user/getMutualFriends",
+    async ({opponentID} :{opponentID:string},
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await userApi.get("/user/getMutualFriends", {
+                params:{opponentID}
+            });
+            console.log("res:", response);
+            if (response.status === 200) {
+                // console.log("response.data.user", response.data.user)
+                return response?.data?.mutualFriends;
             }
         } catch (error: any) {
             return rejectWithValue(

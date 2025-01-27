@@ -1,48 +1,55 @@
 import { useState, useEffect } from "react";
 
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { NavLink } from "react-router-dom";
 import { Search } from "@mui/icons-material";
 import { AppDispatch, RootState } from "@/store/store";
 import { getUserDetails } from "@/services/auth";
+import { getAllUser, searchUser } from "@/services/networkManagement";
 
-export const Header : React.FC= ()=> {
-  const user = useSelector((state:RootState) => state.user);
+export const Header: React.FC = () => {
+  const user = useSelector((state: RootState) => state.user);
   const [searchName, setSearchName] = useState('');
   const [showDropDown, setShowDropDown] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
-  // let timeoutId = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  const handleSearchInputChange = (e:React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchName(e.target.value);
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(getUserDetails());
-  },[])
+  }, [])
 
-//   useEffect(() => {
-//     if (searchName.trim()) {
-//       if (timeoutId) {
-//         clearTimeout(timeoutId);
-//       }
+  useEffect(() => {
+    if (searchName.trim()) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
-//       timeoutId = setTimeout(() => {
-//         dispatch(searchUsers(searchName));
-//       }, 300);
-//     }
-//     else {
-//       dispatch(getAllUser(token));
-//     }
+      timeoutId = setTimeout(() => {
+        dispatch(searchUser({query:searchName}));
+      }, 300);
+    }
+    else {
+      dispatch(getAllUser());
+    }
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [searchName, dispatch]);
 
-//     return () => clearTimeout(timeoutId);
-//   }, [searchName, dispatch]);
 
-
-  const handleSearchSubmit = (e:React.FormEvent<HTMLFormElement>) => {
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchName.trim()) {
-    //   dispatch(searchUsers(searchName));
+      dispatch(searchUser({ query: searchName }));
+    }
+    else{
+      dispatch(getAllUser());
     }
   };
 
@@ -61,9 +68,9 @@ export const Header : React.FC= ()=> {
             onChange={handleSearchInputChange}
           />
           <button
-          type="submit"
+            type="submit"
             className="bg-blue-500 text-white p-1 md:px-4 md:py-2 rounded-full ml-2 hover:bg-blue-600"
-            // onClick={handleSearchSubmit}
+          // onClick={handleSearchSubmit}
           >
             <Search />
           </button>
@@ -71,7 +78,7 @@ export const Header : React.FC= ()=> {
 
 
 
-        <div className='flex flex-col gap-2 items-center cursor-pointer' title={user.fullName} onClick={()=>setShowDropDown(!showDropDown)}>
+        <div className='flex flex-col gap-2 items-center cursor-pointer' title={user.fullName} onClick={() => setShowDropDown(!showDropDown)}>
           <div className='w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-black'>
             <img className='w-full h-full rounded-full' src={user?.profileImage ?? `https://some-cdn.com/default-profile/${user.fullName.charAt(0).toUpperCase()}.png`} alt={"profileImage"} />
           </div>
