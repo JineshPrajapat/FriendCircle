@@ -34,7 +34,7 @@ userApi.interceptors.response.use(
 
                 console.log("Attempting token refresh");
                 const {data} = await axios.post<Token>(
-                    `${import.meta.env.VITE_BACKEND_BASE_URL}/auth/handleRefreshToken`,
+                    `${import.meta.env.VITE_BACKEND_BASE_URL}/auth/refresh-token`,
                     {},
                     {withCredentials : true}
                 );
