@@ -9,7 +9,7 @@ import v1Routes from "./routes/v1/index";
 import errorHandlerMiddleware from "./middlewares/errorHandler";
 import notFoundMiddleware from "./middlewares/notFound";
 import cookieParser from "cookie-parser";
-import logger from "./utils/logger";
+import logger from "./utils/logger";                          
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(helmet())
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "https://friend-circle-olive.vercel.app" || "http://localhost:5173",
+  origin:[ "https://friend-circle-olive.vercel.app" , "http://localhost:5173"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -47,14 +47,18 @@ app.use((req, res, next) => {
 
 app.use("/api/v1", v1Routes);
 
-if (process.env.NODE_ENV === "production") {
-  const buildPath = path.join(__dirname, "..", "..", "client", "dist");
-  app.use(express.static(buildPath));
+// if (process.env.NODE_ENV === "production") {
+//   const buildPath = path.join(__dirname, "..", "..", "client", "dist");
+//   app.use(express.static(buildPath));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(buildPath, "index.html"));
-  });
-}
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.resolve(buildPath, "index.html"));
+//   });
+// }
+
+app.get('/', (req, res) => {
+  res.send('Server is working!');
+});
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
